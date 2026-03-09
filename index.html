@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моё Кафе</title>
+    <!-- Подключаем скрипт Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 16px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
+        .product { border-bottom: 1px solid #ccc; padding: 10px 0; display: flex; align-items: center; }
+        .product-info { flex-grow: 1; }
+        .product-title { font-weight: bold; }
+        .product-price { color: green; }
+        button { background: var(--tg-theme-button-color, #40a7e3); color: var(--tg-theme-button-text-color, #fff); border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-left: 10px; }
+        #cart { margin-top: 20px; padding: 10px; background: var(--tg-theme-secondary-bg-color, #f0f0f0); border-radius: 8px; }
+        #order-btn { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>☕ Наше меню</h1>
+    <div id="products">
+        <!-- Товары будут добавляться сюда через JavaScript -->
+    </div>
+
+    <div id="cart">
+        <h2>Корзина</h2>
+        <div id="cart-items">Корзина пуста</div>
+        <p>Итого: <span id="cart-total">0</span> ₽</p>
+        <button id="order-btn" style="display: none;">📦 Заказать</button>
+    </div>
+
+    <script>
+        // --- Данные меню (можно заменить своим) ---
+        const menu = [
+            { id: 1, name: 'Американо', price: 150 },
+            { id: 2, name: 'Капучино', price: 200 },
+            { id: 3, name: 'Чизкейк', price: 350 },
+            { id: 4, name: 'Круассан', price: 180 }
+        ];
+
+        // --- Состояние корзины ---
+        let cart = [];
+
+        // --- Функции для работы с корзиной ---
+        function addToCart(productId) {
+            const product = menu.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            updateCartDisplay();
+        }
+
+        function removeFromCart(productId) {
+            const index = cart.findIndex(item => item.id === productId);
+            if (index !== -1) {
+                const item = cart[index];
+                if (item.quantity > 1) {
+                    item.quantity--;
+                } else {
+                    cart.splice(index, 1);
+                }
+            }
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const cartTotalSpan = document.getElementById('cart-total');
+            const orderBtn = document.getElementById('order-btn');
+            
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = 'Корзина пуста';
+                cartTotalSpan.innerText = '0';
+                orderBtn.style.display = 'none';
+                return;
+            }
+
+            let total = 0;
+            let itemsHtml = '';
+            cart.forEach(item => {
+                total += item.price * item.quantity;
+                itemsHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>${item.price * item.quantity} ₽ 
+                        <button onclick="removeFromCart(${item.id})" style="padding: 2px 8px; margin-left: 5px;">-</button>
+                    </span>
+                </div>`;
+            });
+            
+            cartItemsDiv.innerHTML = itemsHtml;
+            cartTotalSpan.innerText = total;
+            orderBtn.style.display = 'block';
+        }
+
+        // --- Обработка заказа (отправка данных в Telegram) ---
+        document.getElementById('order-btn').addEventListener('click', function() {
+            // Готовим данные для отправки
+            const orderData = {
+                items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+            };
+
+            // Отправляем данные боту
+            Telegram.WebApp.sendData(JSON.stringify(orderData));
+            
+            // Показываем сообщение и закрываем (опционально)
+            alert('Спасибо! Заказ отправлен администратору.');
+            Telegram.WebApp.close();
+        });
+
+        // --- Отрисовка меню ---
+        function renderMenu() {
+            const productsDiv = document.getElementById('products');
+            menu.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-title">${product.name}</div>
+                        <div class="product-price">${product.price} ₽</div>
+                    </div>
+                    <button onclick="addToCart(${product.id})">➕ Добавить</button>
+                `;
+                productsDiv.appendChild(productDiv);
+            });
+        }
+
+        // --- Инициализация приложения ---
+        renderMenu();
+        updateCartDisplay();
+
+        // Сообщаем Telegram, что приложение готово
+        Telegram.WebApp.ready();
+    </script>
+</body>
+</html>
