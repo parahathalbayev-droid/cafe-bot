@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ====== ТВОИ ДАННЫЕ (уже вставлены) ======
 TOKEN = '8583869049:AAFHSW-sA26F03O_8uHUktatSqA_5FjYGhA'  # Твой токен
 ADMIN_CHAT_ID =6425578995   # ← ЗАМЕНИ ЭТО ЧИСЛО на свой ID (от @userinfobot)
-WEB_APP_URL = "https://ungross-unlamentable-sharleen.ngrok-free.dev"  # Твой адрес ngrok
+WEB_APP_URL = "https://cafe-menu.onrender.com"  # Твой адрес ngrok
 # ==========================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -82,4 +82,5 @@ def main():
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
+
     main()
