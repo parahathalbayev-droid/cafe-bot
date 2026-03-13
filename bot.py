@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -7,11 +8,11 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ====== ТВОИ ДАННЫЕ (уже вставлены) ======
-TOKEN = '8583869049:AAFHSW-sA26F03O_8uHUktatSqA_5FjYGhA'  # Твой токен
-ADMIN_CHAT_ID =6425578995   # ← ЗАМЕНИ ЭТО ЧИСЛО на свой ID (от @userinfobot)
-WEB_APP_URL = "https://cafe-menu-gzgz.onrender.com"  # Твой адрес ngrok
-# ==========================================
+# ====== ТВОИ ДАННЫЕ ======
+TOKEN = '8583869049:AAFHSW-sA26F03O_8uHUktatSqA_5FjYGhA'
+ADMIN_CHAT_ID = 123456789  # ← ЗАМЕНИ НА СВОЙ ID
+WEB_APP_URL = "https://cafe-menu-gzgz.onrender.com"  # твой адрес меню
+# =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Отправляет сообщение с кнопкой для открытия мини-приложения."""
@@ -35,28 +36,30 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        # Парсим заказ из JSON
         order = json.loads(data)
         
-        # Формируем список товаров
         items_list = ""
         for item in order['items']:
             items_list += f"  • {item['name']} x{item['quantity']} = {item['price'] * item['quantity']}₽\n"
         
-        # Сообщение для админа (тебя)
+        # Получаем комментарий и время
+        comment = order.get('comment', '')
+        ready_time = order.get('readyTime', 'Не указано')
+        
+        comment_text = f"\n💬 Комментарий: {comment}" if comment else ""
+        
         message_to_admin = (
             f"🆕 <b>НОВЫЙ ЗАКАЗ!</b>\n\n"
             f"<b>Состав заказа:</b>\n{items_list}\n"
-            f"<b>Итого:</b> {order['total']}₽\n\n"
+            f"<b>Итого:</b> {order['total']}₽\n"
+            f"⏰ <b>Время готовности:</b> {ready_time}\n"
+            f"{comment_text}\n\n"
             f"<b>Клиент:</b> {update.effective_user.full_name}\n"
             f"<b>Username:</b> @{update.effective_user.username}\n"
             f"<b>ID:</b> {update.effective_user.id}"
         )
 
-        # Отправляем заказ админу
         await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=message_to_admin, parse_mode='HTML')
-        
-        # Подтверждение клиенту
         await update.message.reply_text("✅ Спасибо! Ваш заказ принят. Мы скоро свяжемся с вами для уточнения деталей.")
 
     except json.JSONDecodeError:
@@ -68,20 +71,16 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Запуск бота."""
-    # Создаем приложение
     application = Application.builder().token(TOKEN).build()
 
-    # Регистрируем обработчики
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
 
-    # Запускаем бота
-    print("✅ Бот успешно запущен! - bot.py:79")
-    print(f"📱 Адрес приложения: {WEB_APP_URL} - bot.py:80")
-    print("👨‍💼 Ожидаю заказы... - bot.py:81")
+    port = int(os.environ.get('PORT', 8080))
+    print(f"✅ Бот запущен на порту {port}")
+    print(f"📱 Адрес приложения: {WEB_APP_URL}")
+    
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
-
     main()
-
