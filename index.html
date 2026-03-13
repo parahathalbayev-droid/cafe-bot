@@ -4,45 +4,329 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Моё Кафе</title>
-    <!-- Подключаем скрипт Telegram Web App -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 16px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
-        .product { border-bottom: 1px solid #ccc; padding: 10px 0; display: flex; align-items: center; }
-        .product-info { flex-grow: 1; }
-        .product-title { font-weight: bold; }
-        .product-price { color: green; }
-        button { background: var(--tg-theme-button-color, #40a7e3); color: var(--tg-theme-button-text-color, #fff); border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-left: 10px; }
-        #cart { margin-top: 20px; padding: 10px; background: var(--tg-theme-secondary-bg-color, #f0f0f0); border-radius: 8px; }
-        #order-btn { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #f9f9f9);
+            color: var(--tg-theme-text-color, #333);
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: var(--tg-theme-text-color, #2c3e50);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: var(--tg-theme-secondary-bg-color, white);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            color: #28a745;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .add-btn {
+            background: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, white);
+            border: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 23px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(64, 167, 227, 0.3);
+        }
+
+        .add-btn:hover {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+
+        #cart {
+            background: var(--tg-theme-secondary-bg-color, white);
+            border-radius: 24px 24px 0 0;
+            padding: 20px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        #cart h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #cart-items {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .cart-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cart-item-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .cart-item-name {
+            font-weight: 500;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cart-item-price {
+            font-weight: 600;
+            color: #28a745;
+            margin-right: 10px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #order-details {
+            margin: 15px 0;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--tg-theme-hint-color, #666);
+        }
+
+        .detail-field input,
+        .detail-field textarea,
+        .detail-field select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 12px;
+            background: var(--tg-theme-bg-color, white);
+            color: var(--tg-theme-text-color, #333);
+            font-size: 15px;
+        }
+
+        .detail-field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-top: 2px solid rgba(0,0,0,0.05);
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        #order-btn {
+            width: 100%;
+            padding: 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        #order-btn:hover {
+            background: #218838;
+            transform: scale(1.02);
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
-    <h1>☕ Наше меню</h1>
-    <div id="products">
-        <!-- Товары будут добавляться сюда через JavaScript -->
-    </div>
+    <h1>
+        <span>☕ Моё Кафе</span>
+    </h1>
+
+    <div class="menu-grid" id="menu-grid"></div>
 
     <div id="cart">
-        <h2>Корзина</h2>
-        <div id="cart-items">Корзина пуста</div>
-        <p>Итого: <span id="cart-total">0</span> ₽</p>
-        <button id="order-btn" style="display: none;">📦 Заказать</button>
+        <h2>
+            <span>🛒 Корзина</span>
+        </h2>
+        
+        <div id="cart-items" class="empty-cart">
+            Корзина пуста
+        </div>
+
+        <div id="order-details" style="display: none;">
+            <div class="detail-field">
+                <label>📝 Комментарий к заказу</label>
+                <textarea id="comment" placeholder="Особые пожелания, аллергии, предпочтения..."></textarea>
+            </div>
+
+            <div class="detail-field">
+                <label>⏰ Время готовности</label>
+                <select id="ready-time">
+                    <option value="Как можно скорее">Как можно скорее</option>
+                    <option value="Через 15 минут">Через 15 минут</option>
+                    <option value="Через 30 минут">Через 30 минут</option>
+                    <option value="Через 1 час">Через 1 час</option>
+                    <option value="Укажу своё время">Укажу своё время</option>
+                </select>
+            </div>
+
+            <div class="detail-field" id="custom-time-field" style="display: none;">
+                <label>🕐 Ваше время</label>
+                <input type="time" id="custom-time">
+            </div>
+        </div>
+
+        <div class="total-row">
+            <span>Итого:</span>
+            <span id="cart-total">0 ₽</span>
+        </div>
+
+        <button id="order-btn" style="display: none;">📦 Оформить заказ</button>
     </div>
 
     <script>
-        // --- Данные меню (можно заменить своим) ---
+        // Меню с фото (замени пути на свои фото)
         const menu = [
-            { id: 1, name: 'Американо', price: 150 },
-            { id: 2, name: 'Капучино', price: 200 },
-            { id: 3, name: 'Чизкейк', price: 350 },
-            { id: 4, name: 'Круассан', price: 180 }
+            { 
+                id: 1, 
+                name: 'Американо', 
+                price: 150,
+                image: 'https://images.unsplash.com/photo-1559525839-b184a4f5a6b7?w=200&h=200&fit=crop'
+            },
+            { 
+                id: 2, 
+                name: 'Капучино', 
+                price: 200,
+                image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200&h=200&fit=crop'
+            },
+            { 
+                id: 3, 
+                name: 'Чизкейк', 
+                price: 350,
+                image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=200&h=200&fit=crop'
+            },
+            { 
+                id: 4, 
+                name: 'Круассан', 
+                price: 180,
+                image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200&h=200&fit=crop'
+            }
         ];
 
-        // --- Состояние корзины ---
         let cart = [];
 
-        // --- Функции для работы с корзиной ---
+        // Показываем/скрываем поле для своего времени
+        document.getElementById('ready-time').addEventListener('change', function() {
+            const customTimeField = document.getElementById('custom-time-field');
+            customTimeField.style.display = this.value === 'Укажу своё время' ? 'block' : 'none';
+        });
+
         function addToCart(productId) {
             const product = menu.find(p => p.id === productId);
             const existingItem = cart.find(item => item.id === productId);
@@ -72,69 +356,89 @@
             const cartItemsDiv = document.getElementById('cart-items');
             const cartTotalSpan = document.getElementById('cart-total');
             const orderBtn = document.getElementById('order-btn');
+            const orderDetails = document.getElementById('order-details');
             
             if (cart.length === 0) {
-                cartItemsDiv.innerHTML = 'Корзина пуста';
-                cartTotalSpan.innerText = '0';
+                cartItemsDiv.innerHTML = '<div class="empty-cart">🛒 Корзина пуста</div>';
+                cartTotalSpan.innerText = '0 ₽';
                 orderBtn.style.display = 'none';
+                orderDetails.style.display = 'none';
                 return;
             }
 
             let total = 0;
             let itemsHtml = '';
+            
             cart.forEach(item => {
                 total += item.price * item.quantity;
-                itemsHtml += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>${item.name} x${item.quantity}</span>
-                    <span>${item.price * item.quantity} ₽ 
-                        <button onclick="removeFromCart(${item.id})" style="padding: 2px 8px; margin-left: 5px;">-</button>
-                    </span>
-                </div>`;
+                itemsHtml += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <img src="${item.image}" class="cart-item-image" alt="${item.name}">
+                            <span class="cart-item-name">${item.name} x${item.quantity}</span>
+                        </div>
+                        <div class="cart-item-actions">
+                            <span class="cart-item-price">${item.price * item.quantity} ₽</span>
+                            <button class="remove-btn" onclick="removeFromCart(${item.id})">−</button>
+                        </div>
+                    </div>
+                `;
             });
             
             cartItemsDiv.innerHTML = itemsHtml;
-            cartTotalSpan.innerText = total;
+            cartTotalSpan.innerText = `${total} ₽`;
             orderBtn.style.display = 'block';
+            orderDetails.style.display = 'block';
         }
 
-        // --- Обработка заказа (отправка данных в Telegram) ---
         document.getElementById('order-btn').addEventListener('click', function() {
-            // Готовим данные для отправки
+            const comment = document.getElementById('comment').value;
+            const timeSelect = document.getElementById('ready-time');
+            let readyTime = timeSelect.value;
+            
+            if (readyTime === 'Укажу своё время') {
+                const customTime = document.getElementById('custom-time').value;
+                if (customTime) {
+                    readyTime = customTime;
+                }
+            }
+            
             const orderData = {
-                items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
-                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+                items: cart.map(item => ({ 
+                    name: item.name, 
+                    quantity: item.quantity, 
+                    price: item.price 
+                })),
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                comment: comment,
+                readyTime: readyTime
             };
 
-            // Отправляем данные боту
             Telegram.WebApp.sendData(JSON.stringify(orderData));
-            
-            // Показываем сообщение и закрываем (опционально)
-            alert('Спасибо! Заказ отправлен администратору.');
+            alert('✅ Заказ отправлен! Ожидайте подтверждения.');
             Telegram.WebApp.close();
         });
 
-        // --- Отрисовка меню ---
         function renderMenu() {
-            const productsDiv = document.getElementById('products');
+            const menuGrid = document.getElementById('menu-grid');
+            menuGrid.innerHTML = '';
             menu.forEach(product => {
-                const productDiv = document.createElement('div');
-                productDiv.className = 'product';
-                productDiv.innerHTML = `
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <img src="${product.image}" class="product-image" alt="${product.name}">
                     <div class="product-info">
-                        <div class="product-title">${product.name}</div>
+                        <div class="product-name">${product.name}</div>
                         <div class="product-price">${product.price} ₽</div>
                     </div>
-                    <button onclick="addToCart(${product.id})">➕ Добавить</button>
+                    <button class="add-btn" onclick="addToCart(${product.id})">+</button>
                 `;
-                productsDiv.appendChild(productDiv);
+                menuGrid.appendChild(card);
             });
         }
 
-        // --- Инициализация приложения ---
         renderMenu();
         updateCartDisplay();
-
-        // Сообщаем Telegram, что приложение готово
         Telegram.WebApp.ready();
     </script>
 </body>
